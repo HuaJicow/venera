@@ -28,13 +28,16 @@ if (flutterVersionName == null) {
 def keystorePropertiesFile = rootProject.file("key.properties")
 def keystoreProperties = new Properties()
 // key.properties holds the signing secrets and is not committed (and is
-// absent in forks/CI without the secrets configured). Only load it when
-// present so the build can fall back to debug signing instead of failing
-// with "Cannot convert 'null' to File".
-def hasKeystore = keystorePropertiesFile.exists()
-if (hasKeystore) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+// absent, or written empty from missing secrets, in forks/CI). Load it when
+// present and treat the config as usable only when it actually points at a
+// keystore, so the build falls back to debug signing instead of failing with
+// "Cannot convert 'null' to File".
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withReader("UTF-8") { reader ->
+        keystoreProperties.load(reader)
+    }
 }
+def hasKeystore = keystoreProperties['storeFile'] != null
 
 android {
     namespace = "com.github.wgh136.venera"
