@@ -8,6 +8,7 @@ import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_qjs/flutter_qjs.dart';
 import 'package:venera/foundation/app.dart';
+import 'package:venera/foundation/appdata.dart';
 import 'package:venera/foundation/comic_type.dart';
 import 'package:venera/foundation/history.dart';
 import 'package:venera/foundation/res.dart';
@@ -41,7 +42,30 @@ class ComicSourceManager with ChangeNotifier, Init {
 
   factory ComicSourceManager() => _instance ??= ComicSourceManager._create();
 
-  List<ComicSource> all() => List.from(_sources);
+  List<ComicSource> all() {
+    var sources = List<ComicSource>.from(_sources);
+    var order = (appdata.settings['comicSourceListOrder'] as List?)
+        ?.cast<String>();
+    sources.sort((a, b) {
+      var ia = order?.indexOf(a.key) ?? -1;
+      var ib = order?.indexOf(b.key) ?? -1;
+      // Both have a saved position: keep the saved order.
+      if (ia != -1 && ib != -1) return ia.compareTo(ib);
+      // Only one has a saved position: it comes first.
+      if (ia != -1) return -1;
+      if (ib != -1) return 1;
+      // Neither is in the saved order: sort alphabetically by name.
+      return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+    });
+    return sources;
+  }
+
+  /// Persist a custom ordering of comic sources by their keys.
+  void setOrder(List<String> keys) {
+    appdata.settings['comicSourceListOrder'] = keys;
+    appdata.saveData();
+    notifyListeners();
+  }
 
   ComicSource? find(String key) =>
       _sources.firstWhereOrNull((element) => element.key == key);

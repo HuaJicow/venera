@@ -183,6 +183,7 @@ class Settings with ChangeNotifier {
     'categories': [],
     'favorites': [],
     'searchSources': null,
+    'comicSourceListOrder': <String>[], // custom order of comic source keys
     'showFavoriteStatusOnTile': true,
     'showHistoryStatusOnTile': false,
     'blockedWords': [],

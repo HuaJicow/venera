@@ -136,7 +136,22 @@ class _BodyState extends State<_Body> {
   Widget build(BuildContext context) {
     return SmoothCustomScrollView(
       slivers: [
-        SliverAppbar(title: Text('Comic Source'.tl), style: AppbarStyle.shadow),
+        SliverAppbar(
+          title: Text('Comic Source'.tl),
+          style: AppbarStyle.shadow,
+          actions: [
+            if (ComicSource.all().length > 1)
+              Tooltip(
+                message: "Reorder".tl,
+                child: IconButton(
+                  icon: const Icon(Icons.sort),
+                  onPressed: () {
+                    showPopUpWidget(App.rootContext, const _ReorderComicSources());
+                  },
+                ),
+              ),
+          ],
+        ),
         buildCard(context),
         for (var source in ComicSource.all())
           _SliverComicSource(
@@ -325,6 +340,70 @@ class _BodyState extends State<_Body> {
     _addAllPagesWithComicSource(comicSource);
     appdata.saveData();
     App.forceRebuild();
+  }
+}
+
+class _ReorderComicSources extends StatefulWidget {
+  const _ReorderComicSources();
+
+  @override
+  State<_ReorderComicSources> createState() => _ReorderComicSourcesState();
+}
+
+class _ReorderComicSourcesState extends State<_ReorderComicSources> {
+  late List<ComicSource> sources;
+
+  @override
+  void initState() {
+    super.initState();
+    sources = ComicSource.all();
+  }
+
+  void persist() {
+    ComicSourceManager().setOrder(sources.map((e) => e.key).toList());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PopUpWidgetScaffold(
+      title: "Reorder".tl,
+      body: Column(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: Text("Long press and drag to reorder.".tl),
+          ),
+          Expanded(
+            child: ReorderableListView.builder(
+              buildDefaultDragHandles: false,
+              itemCount: sources.length,
+              onReorder: (oldIndex, newIndex) {
+                if (oldIndex < newIndex) {
+                  newIndex--;
+                }
+                setState(() {
+                  var item = sources.removeAt(oldIndex);
+                  sources.insert(newIndex, item);
+                });
+                persist();
+              },
+              itemBuilder: (context, index) {
+                var source = sources[index];
+                return ListTile(
+                  key: ValueKey(source.key),
+                  title: Text(source.name),
+                  subtitle: Text(source.version),
+                  trailing: ReorderableDragStartListener(
+                    index: index,
+                    child: const Icon(Icons.drag_handle),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
