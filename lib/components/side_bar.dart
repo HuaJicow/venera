@@ -45,6 +45,16 @@ class SideBarRoute<T> extends PopupRoute<T> {
     if (!showBarrier) {
       return const SizedBox.shrink();
     }
+    // Drive the barrier color with the route animation so that the dim fades
+    // in/out together with the slide transition. Returning a static
+    // ModalBarrier here would keep the dim at full opacity for the whole pop
+    // and only remove it once the route is disposed, leaving a lingering mask.
+    final color = animation!.drive(
+      ColorTween(
+        begin: barrierColor!.withValues(alpha: 0.0),
+        end: barrierColor,
+      ).chain(CurveTween(curve: barrierCurve)),
+    );
     return Listener(
       behavior: HitTestBehavior.opaque,
       onPointerDown: (event) {
@@ -53,7 +63,7 @@ class SideBarRoute<T> extends PopupRoute<T> {
         }
         _barrierSawPointerDown = true;
       },
-      child: ModalBarrier(
+      child: AnimatedModalBarrier(
         dismissible: dismissible,
         onDismiss: dismissible
             ? () {
@@ -63,7 +73,7 @@ class SideBarRoute<T> extends PopupRoute<T> {
                 navigator?.maybePop();
               }
             : null,
-        color: barrierColor,
+        color: color,
         semanticsLabel: barrierLabel,
       ),
     );
