@@ -57,6 +57,28 @@ class _ExplorePageState extends State<ExplorePage>
     showPopUpWidget(App.rootContext, setExplorePagesWidget());
   }
 
+  void reorderPages(int oldIndex, int newIndex) {
+    if (oldIndex == newIndex) return;
+    var selectedId = pages[controller.index];
+    var newPages = List<String>.from(pages);
+    var item = newPages.removeAt(oldIndex);
+    newPages.insert(newIndex, item);
+    // Preserve entries stored in settings that are not currently displayed
+    // (e.g. pages from sources that are not loaded right now).
+    var stored = List<String>.from(appdata.settings["explore_pages"]);
+    var hidden = stored.where((e) => !newPages.contains(e)).toList();
+    setState(() {
+      pages = newPages;
+      controller = TabController(
+        length: pages.length,
+        vsync: this,
+        initialIndex: pages.indexOf(selectedId).clamp(0, pages.length - 1),
+      );
+    });
+    appdata.settings["explore_pages"] = [...newPages, ...hidden];
+    appdata.saveData();
+  }
+
   NaviPaneState? naviPane;
 
   @override
@@ -148,11 +170,7 @@ class _ExplorePageState extends State<ExplorePage>
         key: PageStorageKey(pages.toString()),
         tabs: pages.map((e) => buildTab(e)).toList(),
         controller: controller,
-        actionButton: TabActionButton(
-          icon: const Icon(Icons.add),
-          text: "Add".tl,
-          onPressed: addPage,
-        ),
+        onReorder: reorderPages,
       ),
     ).paddingTop(context.padding.top);
 

@@ -67,6 +67,31 @@ class _CategoriesPageState extends State<CategoriesPage>
     showPopUpWidget(App.rootContext, setCategoryPagesWidget());
   }
 
+  void reorderPages(int oldIndex, int newIndex) {
+    if (oldIndex == newIndex) return;
+    var selectedId = categories[controller.index];
+    var newCategories = List<String>.from(categories);
+    var item = newCategories.removeAt(oldIndex);
+    newCategories.insert(newIndex, item);
+    // Preserve entries stored in settings that are not currently displayed.
+    var stored = List.from(
+      appdata.settings["categories"],
+    ).whereType<String>().toList();
+    var hidden = stored.where((e) => !newCategories.contains(e)).toList();
+    setState(() {
+      categories = newCategories;
+      controller = TabController(
+        length: categories.length,
+        vsync: this,
+        initialIndex: categories
+            .indexOf(selectedId)
+            .clamp(0, categories.length - 1),
+      );
+    });
+    appdata.settings["categories"] = [...newCategories, ...hidden];
+    appdata.saveData();
+  }
+
   @override
   void dispose() {
     super.dispose();
@@ -108,6 +133,7 @@ class _CategoriesPageState extends State<CategoriesPage>
           AppTabBar(
             controller: controller,
             key: PageStorageKey(categories.toString()),
+            onReorder: reorderPages,
             tabs: categories.map((e) {
               String title = e;
               try {
@@ -117,11 +143,6 @@ class _CategoriesPageState extends State<CategoriesPage>
               }
               return Tab(text: title, key: Key(e));
             }).toList(),
-            actionButton: TabActionButton(
-              icon: const Icon(Icons.add),
-              text: "Add".tl,
-              onPressed: addPage,
-            ),
           ).paddingTop(context.padding.top),
           Expanded(
             child: TabBarView(

@@ -275,6 +275,7 @@ class AppTabBar extends StatefulWidget {
     required this.tabs,
     this.actionButton,
     this.withUnderLine = true,
+    this.onReorder,
   });
 
   final TabController? controller;
@@ -284,6 +285,11 @@ class AppTabBar extends StatefulWidget {
   final Widget? actionButton;
 
   final bool withUnderLine;
+
+  /// If provided, tabs can be reordered via a long press (mobile) or
+  /// secondary tap (desktop) context menu. [oldIndex] and [newIndex] are
+  /// the source and target positions in [tabs].
+  final void Function(int oldIndex, int newIndex)? onReorder;
 
   @override
   State<AppTabBar> createState() => _AppTabBarState();
@@ -453,9 +459,54 @@ class _AppTabBarState extends State<AppTabBar> {
     _controller.animateTo(i);
   }
 
+  void showReorderMenu(int i, Offset location) {
+    if (widget.onReorder == null || widget.tabs.length < 2) {
+      return;
+    }
+    showMenuX(App.rootContext, location, [
+      if (i > 0)
+        MenuEntry(
+          icon: Icons.keyboard_arrow_left,
+          text: "Move Left".tl,
+          onClick: () => widget.onReorder!(i, i - 1),
+        ),
+      if (i < widget.tabs.length - 1)
+        MenuEntry(
+          icon: Icons.keyboard_arrow_right,
+          text: "Move Right".tl,
+          onClick: () => widget.onReorder!(i, i + 1),
+        ),
+      if (i > 0)
+        MenuEntry(
+          icon: Icons.first_page,
+          text: "Move to Start".tl,
+          onClick: () => widget.onReorder!(i, 0),
+        ),
+      if (i < widget.tabs.length - 1)
+        MenuEntry(
+          icon: Icons.last_page,
+          text: "Move to End".tl,
+          onClick: () => widget.onReorder!(i, widget.tabs.length - 1),
+        ),
+    ]);
+  }
+
   Widget buildTab(int i) {
     return InkWell(
       onTap: () => onTabClicked(i),
+      onLongPress: widget.onReorder == null
+          ? null
+          : () {
+              final box = keys[i].currentContext?.findRenderObject()
+                  as RenderBox?;
+              final location = box == null
+                  ? Offset.zero
+                  : box.localToGlobal(box.size.bottomLeft(Offset.zero));
+              showReorderMenu(i, location);
+            },
+      onSecondaryTapDown: widget.onReorder == null
+          ? null
+          : (details) => showReorderMenu(i, details.globalPosition),
       borderRadius: BorderRadius.circular(tabRadius),
       child: KeyedSubtree(
         key: keys[i],

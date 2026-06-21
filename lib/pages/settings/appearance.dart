@@ -42,6 +42,14 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
             App.forceRebuild();
           },
         ).toSliver(),
+        _SwitchSetting(
+          title: "Show covers on home page".tl,
+          subtitle: "Hide covers of recent comics to avoid exposing them".tl,
+          settingKey: "showCoverOnHomePage",
+          onChanged: () {
+            App.forceRebuild();
+          },
+        ).toSliver(),
       ],
     );
   }

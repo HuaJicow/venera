@@ -186,6 +186,7 @@ class Settings with ChangeNotifier {
     'comicSourceListOrder': <String>[], // custom order of comic source keys
     'showFavoriteStatusOnTile': true,
     'showHistoryStatusOnTile': false,
+    'showCoverOnHomePage': true, // show comic covers on home page cards
     'blockedWords': [],
     'blockedCommentWords': [],
     'defaultSearchTarget': null,

@@ -93,6 +93,22 @@ class _MainPageState extends State<MainPage> {
         });
       },
       paneActions: [
+        if (index == 2)
+          PaneActionEntry(
+            icon: Icons.edit_outlined,
+            label: "Edit".tl,
+            onTap: () {
+              showPopUpWidget(App.rootContext, setExplorePagesWidget());
+            },
+          ),
+        if (index == 3)
+          PaneActionEntry(
+            icon: Icons.edit_outlined,
+            label: "Edit".tl,
+            onTap: () {
+              showPopUpWidget(App.rootContext, setCategoryPagesWidget());
+            },
+          ),
         if(index != 0)
           PaneActionEntry(
             icon: Icons.search,
